@@ -30,6 +30,15 @@ public class DroneProjectile : MonoBehaviour
             ReturnToPool();
             return;
         }
+
+        if (target.CompareTag("Target"))
+        {
+            Debug.Log($"Drone projectile hit target: {target.gameObject.name}");
+            GameplayManager.Instance.DestroyTarget(target.gameObject);
+
+            ReturnToPool();
+            return;
+        }
     }
 
     private void ReturnToPool()

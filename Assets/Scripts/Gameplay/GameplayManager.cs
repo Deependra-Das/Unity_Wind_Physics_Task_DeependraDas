@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using Unity.Cinemachine;
 using UnityEngine;
 
@@ -18,6 +20,9 @@ public class GameplayManager : MonoBehaviour
     [SerializeField] private PatrolEnemy _patrolEnemyPrefab;
     [SerializeField] private Transform _enemySpawnPoint;
     [SerializeField] private Transform[] _patrolPoints;
+
+    [Header("Target")]
+    [SerializeField] private List<GameObject> _targets;
 
     private PatrolEnemy _enemy;
     private EnemyDetectionZone _enemyDetectionZone;
@@ -69,5 +74,20 @@ public class GameplayManager : MonoBehaviour
             Destroy(_enemy.gameObject);
             _enemy = null;
         }
+    }
+
+    public void DestroyTarget(GameObject target)
+    {
+        if (target == null)
+            return;
+
+        if (!_targets.Contains(target))
+            return;
+
+        Debug.Log($"Destroying target: {target.name}");
+
+        _targets.Remove(target);
+
+        Destroy(target);
     }
 }
