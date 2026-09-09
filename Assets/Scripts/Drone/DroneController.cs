@@ -19,11 +19,14 @@ public class DroneController : MonoBehaviour
     [SerializeField] private float _maxTilt = 20f;
     [SerializeField] private float _tiltSpeed = 6f;
     [SerializeField] private Transform _visualRoot;
+    [SerializeField] private Transform _cameraTarget;
 
     [Header("========== MISSILE ==========")]
     [SerializeField] private GameObject missilePrefab;
     [SerializeField] private Transform missileSpawnPoint;
     [SerializeField] private float dropSpeed = 2f;
+
+    public Transform CameraTarget => _cameraTarget;
 
     private Rigidbody _droneRB;
     private Vector2 _moveInput;
