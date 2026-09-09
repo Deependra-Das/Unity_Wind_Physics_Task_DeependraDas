@@ -2,7 +2,12 @@ using UnityEngine;
 
 public class EnemyDetectionZone : MonoBehaviour
 {
-    [SerializeField] private PatrolEnemy _patrolEnemy;
+    private PatrolEnemy _patrolEnemy;
+
+    public void Initialize(PatrolEnemy patrolEnemy)
+    {
+        _patrolEnemy = patrolEnemy;
+    }
 
     private void OnTriggerEnter(Collider target)
     {

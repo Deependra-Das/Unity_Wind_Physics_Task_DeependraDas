@@ -19,15 +19,19 @@ public class DroneController : MonoBehaviour
     [SerializeField] private float _maxTilt = 20f;
     [SerializeField] private float _tiltSpeed = 6f;
     [SerializeField] private Transform _visualRoot;
+    [SerializeField] private Transform _cameraTarget;
 
     [Header("========== MISSILE ==========")]
-    [SerializeField] private GameObject missilePrefab;
-    [SerializeField] private Transform missileSpawnPoint;
-    [SerializeField] private float dropSpeed = 2f;
+    [SerializeField] private Transform _missileSpawnPoint;
+    [SerializeField] private float _dropSpeed = 2f;
+
+    public Transform CameraTarget => _cameraTarget;
 
     private Rigidbody _droneRB;
     private Vector2 _moveInput;
     private float _verticalInput;
+    private bool _isInitialized = false;
+    private ProjectilePoolService _projectilePoolServiceObj;
 
     private void Awake()
     {
@@ -77,10 +81,19 @@ public class DroneController : MonoBehaviour
         fireAction.action.Disable();
     }
 
+    public void Initialize(ProjectilePoolService projectilePoolService)
+    {
+        _projectilePoolServiceObj = projectilePoolService;
+        _isInitialized = true;
+    }
+
     private void FixedUpdate()
     {
-        MoveDrone();
-        RotateDrone();
+        if (_isInitialized)
+        { 
+            MoveDrone();
+            RotateDrone();
+        }
     }
 
     private void OnMove(InputAction.CallbackContext context)
@@ -158,10 +171,9 @@ public class DroneController : MonoBehaviour
 
     private void DropMissile()
     {
-        GameObject missile = Instantiate(missilePrefab, missileSpawnPoint.position, missileSpawnPoint.rotation);
-        Rigidbody missileRb = missile.GetComponent<Rigidbody>();
+        DroneProjectile missile = _projectilePoolServiceObj.SpawnDroneProjectile(_missileSpawnPoint.position, _missileSpawnPoint.rotation);
+        if (missile == null) return;
 
-        missileRb.linearVelocity = _droneRB.linearVelocity;
-        missileRb.linearVelocity += Vector3.down * dropSpeed;
+        missile.Initialize(_projectilePoolServiceObj, _droneRB.linearVelocity, _dropSpeed);
     }
 }

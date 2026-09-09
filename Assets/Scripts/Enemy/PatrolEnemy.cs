@@ -3,45 +3,57 @@ using UnityEngine;
 public class PatrolEnemy : MonoBehaviour
 {
     [Header("Patrol")]
-    [SerializeField] private float moveSpeed = 2f;
-    [SerializeField] private float rotationSpeed = 5f;
-    [SerializeField] private float pointReachDistance = 0.2f;
-    [SerializeField] private Transform[] patrolPoints;
+    [SerializeField] private float _moveSpeed = 2f;
+    [SerializeField] private float _rotationSpeed = 5f;
+    [SerializeField] private float _pointReachDistance = 0.2f;
 
     [Header("Combat")]
-    [SerializeField] private Transform firePoint;
-    [SerializeField] private EnemyProjectile projectilePrefab;
+    [SerializeField] private Transform _firePoint;
     [SerializeField] private float fireRate = 1f;
     [SerializeField] private float projectileSpeed = 20f;
     [SerializeField] private float aimRotationSpeed = 180f;
 
-    private int currentPointIndex;
-    private Transform target;
-    private float nextFireTime;
-    private bool isInCombat => target != null;
+    private Transform[] _patrolPoints;
+    private int _currentPointIndex;
+    private Transform _target;
+    private float _nextFireTime;
+    private bool _isInCombat => _target != null;
+    private bool _isInitialized = false;
+
+    private ProjectilePoolService _projectilePoolServiceObj;
+
+    public void Initialize(ProjectilePoolService projectilePoolServiceObj, Transform[] patrolPoints)
+    {
+        _projectilePoolServiceObj = projectilePoolServiceObj;
+        _patrolPoints = patrolPoints;
+        _isInitialized = true;
+    }
 
     private void Update()
     {
-        if (isInCombat)
+        if (_isInitialized)
         {
-            Combat();
-        }
-        else
-        {
-            Patrol();
+            if (_isInCombat)
+            {
+                Combat();
+            }
+            else
+            {
+                Patrol();
+            }
         }
     }
 
     private void Patrol()
     {
-        if (patrolPoints == null || patrolPoints.Length == 0) return;
+        if (_patrolPoints == null || _patrolPoints.Length == 0) return;
 
-        Transform targetPoint = patrolPoints[currentPointIndex];
+        Transform targetPoint = _patrolPoints[_currentPointIndex];
         Vector3 direction = targetPoint.position - transform.position;
 
         direction.y = 0f;
 
-        if (direction.sqrMagnitude <= pointReachDistance * pointReachDistance)
+        if (direction.sqrMagnitude <= _pointReachDistance * _pointReachDistance)
         {
             GoToNextPoint();
             return;
@@ -53,7 +65,7 @@ public class PatrolEnemy : MonoBehaviour
 
     private void MoveTowards(Vector3 direction)
     {
-        Vector3 movement = direction.normalized * moveSpeed * Time.deltaTime;
+        Vector3 movement = direction.normalized * _moveSpeed * Time.deltaTime;
         transform.position += movement;
     }
 
@@ -63,22 +75,22 @@ public class PatrolEnemy : MonoBehaviour
             return;
 
         Quaternion targetRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, _rotationSpeed * Time.deltaTime);
     }
 
     private void GoToNextPoint()
     {
-        currentPointIndex++;
+        _currentPointIndex++;
 
-        if (currentPointIndex >= patrolPoints.Length)
+        if (_currentPointIndex >= _patrolPoints.Length)
         {
-            currentPointIndex = 0;
+            _currentPointIndex = 0;
         }
     }
 
     private void Combat()
     {
-        if (target == null)
+        if (_target == null)
             return;
 
         RotateTowardsTarget();
@@ -88,7 +100,7 @@ public class PatrolEnemy : MonoBehaviour
 
     private void RotateTowardsTarget()
     {
-        Vector3 direction = target.position - transform.position;
+        Vector3 direction = _target.position - transform.position;
 
         direction.y = 0f;
 
@@ -102,19 +114,19 @@ public class PatrolEnemy : MonoBehaviour
 
     private void AimFirePointAtTarget()
     {
-        Vector3 direction = target.position - firePoint.position;
+        Vector3 direction = _target.position - _firePoint.position;
 
         if (direction.sqrMagnitude < 0.001f)
             return;
 
         Quaternion targetRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
 
-        firePoint.rotation = Quaternion.RotateTowards(firePoint.rotation, targetRotation, aimRotationSpeed * Time.deltaTime);
+        _firePoint.rotation = Quaternion.RotateTowards(_firePoint.rotation, targetRotation, aimRotationSpeed * Time.deltaTime);
     }
 
     private void TryShoot()
     {
-        if (Time.time < nextFireTime)
+        if (Time.time < _nextFireTime)
             return;
 
         if (!IsFirePointAimed())
@@ -122,61 +134,60 @@ public class PatrolEnemy : MonoBehaviour
 
         Shoot();
 
-        nextFireTime = Time.time + (1f / fireRate);
+        _nextFireTime = Time.time + (1f / fireRate);
     }
 
     private bool IsFirePointAimed()
     {
-        Vector3 direction = target.position - firePoint.position;
+        Vector3 direction = _target.position - _firePoint.position;
 
         if (direction.sqrMagnitude < 0.001f)
             return false;
 
-        float angle = Vector3.Angle(firePoint.forward, direction.normalized);
+        float angle = Vector3.Angle(_firePoint.forward, direction.normalized);
 
         return angle <= 5f;
     }
 
     private void Shoot()
     {
-        if (projectilePrefab == null || firePoint == null)
-            return;
+        EnemyProjectile projectile = _projectilePoolServiceObj.SpawnEnemyProjectile(_firePoint.position, _firePoint.rotation);
+        if (projectile == null) return;
 
-        EnemyProjectile projectile = Instantiate(projectilePrefab, firePoint.position, firePoint.rotation);
-        projectile.Launch(firePoint.forward, projectileSpeed);
+        projectile.Initialize();
+        projectile.Launch(_firePoint.forward, projectileSpeed);
     }
 
     public void SetTarget(Transform newTarget)
     {
-        target = newTarget;
-        nextFireTime = Time.time;
+        _target = newTarget;
+        _nextFireTime = Time.time;
     }
 
     public void ClearTarget()
     {
-        target = null;
+        _target = null;
     }
-
 
     private void OnDrawGizmosSelected()
     {
-        if (patrolPoints == null || patrolPoints.Length == 0)
+        if (_patrolPoints == null || _patrolPoints.Length == 0)
             return;
 
         Gizmos.color = Color.green;
 
-        for (int i = 0; i < patrolPoints.Length; i++)
+        for (int i = 0; i < _patrolPoints.Length; i++)
         {
-            if (patrolPoints[i] == null)
+            if (_patrolPoints[i] == null)
                 continue;
 
-            Gizmos.DrawSphere(patrolPoints[i].position, 0.25f);
+            Gizmos.DrawSphere(_patrolPoints[i].position, 0.25f);
 
-            int nextIndex = (i + 1) % patrolPoints.Length;
+            int nextIndex = (i + 1) % _patrolPoints.Length;
 
-            if (patrolPoints[nextIndex] != null)
+            if (_patrolPoints[nextIndex] != null)
             {
-                Gizmos.DrawLine(patrolPoints[i].position, patrolPoints[nextIndex].position);
+                Gizmos.DrawLine(_patrolPoints[i].position, _patrolPoints[nextIndex].position);
             }
         }
     }
