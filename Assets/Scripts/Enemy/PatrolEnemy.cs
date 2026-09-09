@@ -8,11 +8,28 @@ public class PatrolEnemy : MonoBehaviour
     [SerializeField] private float pointReachDistance = 0.2f;
     [SerializeField] private Transform[] patrolPoints;
 
+    [Header("Combat")]
+    [SerializeField] private Transform firePoint;
+    [SerializeField] private EnemyProjectile projectilePrefab;
+    [SerializeField] private float fireRate = 1f;
+    [SerializeField] private float projectileSpeed = 20f;
+    [SerializeField] private float aimRotationSpeed = 180f;
+
     private int currentPointIndex;
+    private Transform target;
+    private float nextFireTime;
+    private bool isInCombat => target != null;
 
     private void Update()
     {
-        Patrol();
+        if (isInCombat)
+        {
+            Combat();
+        }
+        else
+        {
+            Patrol();
+        }
     }
 
     private void Patrol()
@@ -58,6 +75,88 @@ public class PatrolEnemy : MonoBehaviour
             currentPointIndex = 0;
         }
     }
+
+    private void Combat()
+    {
+        if (target == null)
+            return;
+
+        RotateTowardsTarget();
+        AimFirePointAtTarget();
+        TryShoot();
+    }
+
+    private void RotateTowardsTarget()
+    {
+        Vector3 direction = target.position - transform.position;
+
+        direction.y = 0f;
+
+        if (direction.sqrMagnitude < 0.001f)
+            return;
+
+        Quaternion targetRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, aimRotationSpeed * Time.deltaTime);
+    }
+
+    private void AimFirePointAtTarget()
+    {
+        Vector3 direction = target.position - firePoint.position;
+
+        if (direction.sqrMagnitude < 0.001f)
+            return;
+
+        Quaternion targetRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+
+        firePoint.rotation = Quaternion.RotateTowards(firePoint.rotation, targetRotation, aimRotationSpeed * Time.deltaTime);
+    }
+
+    private void TryShoot()
+    {
+        if (Time.time < nextFireTime)
+            return;
+
+        if (!IsFirePointAimed())
+            return;
+
+        Shoot();
+
+        nextFireTime = Time.time + (1f / fireRate);
+    }
+
+    private bool IsFirePointAimed()
+    {
+        Vector3 direction = target.position - firePoint.position;
+
+        if (direction.sqrMagnitude < 0.001f)
+            return false;
+
+        float angle = Vector3.Angle(firePoint.forward, direction.normalized);
+
+        return angle <= 5f;
+    }
+
+    private void Shoot()
+    {
+        if (projectilePrefab == null || firePoint == null)
+            return;
+
+        EnemyProjectile projectile = Instantiate(projectilePrefab, firePoint.position, firePoint.rotation);
+        projectile.Launch(firePoint.forward, projectileSpeed);
+    }
+
+    public void SetTarget(Transform newTarget)
+    {
+        target = newTarget;
+        nextFireTime = Time.time;
+    }
+
+    public void ClearTarget()
+    {
+        target = null;
+    }
+
 
     private void OnDrawGizmosSelected()
     {
