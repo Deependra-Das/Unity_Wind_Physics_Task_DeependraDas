@@ -35,16 +35,17 @@ public class GameplayManager : MonoBehaviour
 
     public void Initialize(ProjectilePoolService projectilePoolService)
     {
-        SpawnDrone();
-        PatrolEnemy enemy = SpawnEnemy(projectilePoolService);
-        SpawnEnemyDetectionZone(enemy);
+        SpawnDrone(projectilePoolService);
+        _enemy = SpawnEnemy(projectilePoolService);
+        SpawnEnemyDetectionZone(_enemy);
     }
 
-    public DroneController SpawnDrone()
+    public DroneController SpawnDrone(ProjectilePoolService projectilePoolService)
     {
         DroneController drone = Instantiate(_dronePrefab, _droneSpawnPoint.position, _droneSpawnPoint.rotation);
         _droneFollowCamera.LookAt = drone.CameraTarget;
         _droneFollowCamera.Follow = drone.CameraTarget;
+        drone.Initialize(projectilePoolService);
         return drone;
     }
 
@@ -61,8 +62,12 @@ public class GameplayManager : MonoBehaviour
         _enemyDetectionZone.Initialize(enemy);
     }
 
-    public PatrolEnemy GetEnemy()
+    public void DetroyEnemy(PatrolEnemy enemy)
     {
-        return _enemy;
+        if (_enemy == enemy)
+        { 
+            Destroy(_enemy.gameObject);
+            _enemy = null;
+        }
     }
 }

@@ -230,9 +230,8 @@ MonoBehaviour:
   _tiltSpeed: 6
   _visualRoot: {fileID: 7764856681216860579}
   _cameraTarget: {fileID: 3697838324757502911}
-  missilePrefab: {fileID: 272622752983172899, guid: 6d4b8143342654b40b7b05cd973a720e, type: 3}
-  missileSpawnPoint: {fileID: 5644931832505637633}
-  dropSpeed: 2
+  _missileSpawnPoint: {fileID: 5644931832505637633}
+  _dropSpeed: 2
 --- !u!1 &3744611002589432469
 GameObject:
   m_ObjectHideFlags: 0
