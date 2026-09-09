@@ -9,6 +9,7 @@ public class DroneController : MonoBehaviour
     [SerializeField] private InputActionReference _moveAction;
     [SerializeField] private InputActionReference _ascendAction;
     [SerializeField] private InputActionReference _descendAction;
+    [SerializeField] private InputActionReference fireAction;
 
     [Header("Movement")]
     [SerializeField] private float _moveSpeed = 12f;
@@ -18,6 +19,11 @@ public class DroneController : MonoBehaviour
     [SerializeField] private float _maxTilt = 20f;
     [SerializeField] private float _tiltSpeed = 6f;
     [SerializeField] private Transform _visualRoot;
+
+    [Header("========== MISSILE ==========")]
+    [SerializeField] private GameObject missilePrefab;
+    [SerializeField] private Transform missileSpawnPoint;
+    [SerializeField] private float dropSpeed = 2f;
 
     private Rigidbody _droneRB;
     private Vector2 _moveInput;
@@ -32,6 +38,7 @@ public class DroneController : MonoBehaviour
         _droneRB.angularDamping = 4f;
         _droneRB.constraints = RigidbodyConstraints.FreezeRotation;
     }
+
     private void OnEnable()
     {
         _moveAction.action.performed += OnMove;
@@ -43,9 +50,12 @@ public class DroneController : MonoBehaviour
         _descendAction.action.performed += OnDescend;
         _descendAction.action.canceled += OnDescend;
 
+        fireAction.action.performed += OnFire;
+
         _moveAction.action.Enable();
         _ascendAction.action.Enable();
         _descendAction.action.Enable();
+        fireAction.action.Enable();
     }
 
     private void OnDisable()
@@ -59,9 +69,12 @@ public class DroneController : MonoBehaviour
         _descendAction.action.performed -= OnDescend;
         _descendAction.action.canceled -= OnDescend;
 
+        fireAction.action.performed -= OnFire;
+
         _moveAction.action.Disable();
         _ascendAction.action.Disable();
         _descendAction.action.Disable();
+        fireAction.action.Disable();
     }
 
     private void FixedUpdate()
@@ -99,6 +112,11 @@ public class DroneController : MonoBehaviour
         }
     }
 
+    private void OnFire(InputAction.CallbackContext context)
+    {
+        DropMissile();
+    }
+
     private void MoveDrone()
     {
         Transform cameraTransform = Camera.main.transform;
@@ -127,7 +145,6 @@ public class DroneController : MonoBehaviour
         _droneRB.linearVelocity = Vector3.Lerp(_droneRB.linearVelocity, targetVelocity, _acceleration * Time.fixedDeltaTime);
     }
 
-
     private void RotateDrone()
     {
         Vector3 horizontalVelocity = new Vector3( _droneRB.linearVelocity.x, 0f, _droneRB.linearVelocity.z);
@@ -137,5 +154,14 @@ public class DroneController : MonoBehaviour
 
         Quaternion targetRotation = Quaternion.LookRotation(horizontalVelocity.normalized, Vector3.up);
         _droneRB.MoveRotation(Quaternion.Slerp(_droneRB.rotation, targetRotation, _rotationSpeed * Time.fixedDeltaTime));
+    }
+
+    private void DropMissile()
+    {
+        GameObject missile = Instantiate(missilePrefab, missileSpawnPoint.position, missileSpawnPoint.rotation);
+        Rigidbody missileRb = missile.GetComponent<Rigidbody>();
+
+        missileRb.linearVelocity = _droneRB.linearVelocity;
+        missileRb.linearVelocity += Vector3.down * dropSpeed;
     }
 }
