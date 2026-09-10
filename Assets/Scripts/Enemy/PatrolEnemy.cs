@@ -153,7 +153,7 @@ public class PatrolEnemy : MonoBehaviour
     {
         EnemyProjectile projectile = _projectilePoolServiceObj.SpawnEnemyProjectile(_firePoint.position, _firePoint.rotation);
         if (projectile == null) return;
-
+        AudioManager.Instance.PlaySFX(AudioTypeEnum.EnemyProjectile);
         projectile.Initialize();
         projectile.Launch(_firePoint.forward, projectileSpeed);
     }
