@@ -26,6 +26,7 @@ public class GameplayManager : MonoBehaviour
 
     private PatrolEnemy _enemy;
     private EnemyDetectionZone _enemyDetectionZone;
+    private VfxPoolService _vfxPoolServiceObj;
 
     private void Awake()
     {
@@ -38,8 +39,9 @@ public class GameplayManager : MonoBehaviour
         Instance = this;
     }
 
-    public void Initialize(ProjectilePoolService projectilePoolService)
+    public void Initialize(ProjectilePoolService projectilePoolService, VfxPoolService vfxPoolService)
     {
+        _vfxPoolServiceObj = vfxPoolService;
         SpawnDrone(projectilePoolService);
         _enemy = SpawnEnemy(projectilePoolService);
         SpawnEnemyDetectionZone(_enemy);
@@ -70,7 +72,8 @@ public class GameplayManager : MonoBehaviour
     public void DetroyEnemy(PatrolEnemy enemy)
     {
         if (_enemy == enemy)
-        { 
+        {
+            SpawnExplosion(enemy.transform.position);
             Destroy(_enemy.gameObject);
             _enemy = null;
         }
@@ -85,9 +88,16 @@ public class GameplayManager : MonoBehaviour
             return;
 
         Debug.Log($"Destroying target: {target.name}");
-
+        SpawnExplosion(target.transform.position);
         _targets.Remove(target);
 
         Destroy(target);
     }
+
+    private void SpawnExplosion(Vector3 position)
+    {
+        ExplosionVfx explosion =_vfxPoolServiceObj.GetExplosion(position);
+        explosion.Play();
+    }
+
 }
