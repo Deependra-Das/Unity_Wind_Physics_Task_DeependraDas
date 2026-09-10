@@ -39,6 +39,14 @@ public class DroneProjectile : MonoBehaviour
             ReturnToPool();
             return;
         }
+
+        if (target.CompareTag("Ground"))
+        {
+            Debug.Log($"Drone projectile hit Groiund: {target.gameObject.name}");
+
+            ReturnToPool();
+            return;
+        }
     }
 
     private void ReturnToPool()
