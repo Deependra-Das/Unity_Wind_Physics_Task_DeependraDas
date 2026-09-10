@@ -173,7 +173,7 @@ public class DroneController : MonoBehaviour
     {
         DroneProjectile missile = _projectilePoolServiceObj.SpawnDroneProjectile(_missileSpawnPoint.position, _missileSpawnPoint.rotation);
         if (missile == null) return;
-
+        AudioManager.Instance.PlaySFX(AudioTypeEnum.FireMissile);
         missile.Initialize(_projectilePoolServiceObj, _droneRB.linearVelocity, _dropSpeed);
     }
 }

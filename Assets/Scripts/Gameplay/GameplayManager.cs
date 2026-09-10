@@ -97,6 +97,7 @@ public class GameplayManager : MonoBehaviour
     private void SpawnExplosion(Vector3 position)
     {
         ExplosionVfx explosion =_vfxPoolServiceObj.GetExplosion(position);
+        AudioManager.Instance.PlaySFX(AudioTypeEnum.Explosion);
         explosion.Play();
     }
 
